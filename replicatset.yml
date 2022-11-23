@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: ReplicaSet
 metadata:
- name: myrs
+ name: addressrs
 spec:
  replicas: 2
  selector:
@@ -14,5 +14,5 @@ spec:
     app: java
   spec:
    containers:
-    - name: c1
-      image: myimage01:6
+    - name: addresscont
+      image: bhavaniprasan/addressimg:latest
