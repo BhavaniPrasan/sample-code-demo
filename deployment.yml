@@ -1,0 +1,93 @@
+pipeline {
+ tools {
+	jdk 'myjava'
+	maven 'mymaven'
+ }
+ agent any
+ enironment{
+	DOCKER_IMAGE_NAME = "bhavaniprasan/addressimg:latest"
+ }
+ stages{
+	stage('Clone Repo'){
+ 	 	steps{
+			git 'https://github.com/BhavaniPrasan/sample-code-demo.git'
+		}
+	}
+	stage('Compile code'){
+ 	 	steps{
+			sh 'mvn compile'
+		}
+	}
+	stage('Package the code'){
+ 	 	steps{
+			sh 'mvn package'
+		}
+	}
+	stage('Build Docker image'){
+ 	 	steps{
+			script{
+				app = docker.build(DOCKER_IMAGE_NAME)
+			}			
+		}
+	}
+	stage('Push Docker Image') {
+                steps {
+                	script {
+                    		docker.withRegistry('https://registry.hub.docker.com', 'docker_hub_login') {
+                        	app.push("${env.BUILD_NUMBER}")
+                        	app.push("latest")
+                    		}
+                	}	
+       		 }
+	}
+stage('DeployToProduction') {
+           
+            steps {
+                
+                kubernetesDeploy(
+                    kubeconfigId: 'kubeconfig',
+                    configs: 'replicaset.yml',
+                    enableConfigSubstitution: true
+                )
+            }
+        }
+=======================================================================================
+
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: kubeserve
+spec:
+  replicas: 3
+  minReadySeconds: 10 # wait for 45 sec before going to deploy next pod
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1  
+      maxSurge: 1        # max number of pods to run for the deployment
+  selector:
+    matchLabels:
+      app: kubeserve
+  template:
+    metadata:
+      name: kubeserve
+      labels:
+        app: kubeserve
+    spec:
+      containers:
+       - name: app
+         image: bhavaniprasan/addressimg:latest
+        
+---
+kind: Service
+apiVersion: v1
+metadata:
+   name: kubeserve-svc
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+  selector: 
+    app: kubeserve
