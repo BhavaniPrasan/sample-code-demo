@@ -1,0 +1,4 @@
+Memory Usage: 3815/7725MB (49.39%)
+Disk Usage: 12/15GB (79%)
+ 06:21:29 up  1:24,  0 users,  load average: 0.10, 0.21, 0.20
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
